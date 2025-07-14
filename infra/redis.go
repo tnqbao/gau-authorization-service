@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/tnqbao/gau-authorization-service/config"
 	"log"
@@ -11,7 +12,7 @@ type RedisClient struct {
 	Client *redis.Client
 }
 
-func InitRedisClient(cfg *config.EnvConfig) *RedisClient {
+func InitRedisClient(cfg *config.EnvConfig) (*RedisClient, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Address,
 		Password: cfg.Redis.Password,
@@ -19,12 +20,12 @@ func InitRedisClient(cfg *config.EnvConfig) *RedisClient {
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("Redis connection failed: %v", err)
+		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
 	log.Println("Connected to Redis:", cfg.Redis.Address)
 
-	return &RedisClient{Client: client}
+	return &RedisClient{Client: client}, nil
 }
 
 func (r *RedisClient) Set(key string, value string) error {
