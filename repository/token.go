@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (r *Repository) CreateRefreshToken(token *schemas.RefreshToken) error {
+func (r *Repository) CreateRefreshToken(token *entity.RefreshToken) error {
 	if err := r.db.Create(token).Error; err != nil {
 		return err
 	}
@@ -18,26 +18,26 @@ func (r *Repository) DeleteRefreshTokenByTokenAndDevice(token string, deviceID s
 	return result.RowsAffected, result.Error
 }
 
-//func (r *Repository) GetUserInfoFromRefreshToken(token string) (*schemas.User, error) {
-//	var refreshToken schemas.RefreshToken
-//	if err := r.db.Where("token = ?", token).First(&refreshToken).Error; err != nil {
-//		return nil, err
-//	}
-//	if refreshToken.ExpiresAt.Before(time.Now()) {
-//		return nil, fmt.Errorf("refresh token expired")
-//	}
-//
-//	var user schemas.User
-//	if err := r.db.Select("user_id, permission, full_name").
-//		Where("user_id = ?", refreshToken.UserID).
-//		First(&user).Error; err != nil {
-//		return nil, err
-//	}
-//
-//	return &user, nil
-//}
+// func (r *Repository) GetUserInfoFromRefreshToken(token string) (*schemas.User, error) {
+// 	var refreshToken schemas.RefreshToken
+// 	if err := r.db.Where("token = ?", token).First(&refreshToken).Error; err != nil {
+// 		return nil, err
+// 	}
+// 	if refreshToken.ExpiresAt.Before(time.Now()) {
+// 		return nil, fmt.Errorf("refresh token expired")
+// 	}
 
-func (r *Repository) GetRefreshTokenByTokenAndDevice(token string, deviceID string) (*schemas.RefreshToken, error) {
+// 	var user schemas.User
+// 	if err := r.db.Select("user_id, permission, full_name").
+// 		Where("user_id = ?", refreshToken.UserID).
+// 		First(&user).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &user, nil
+// }
+
+func (r *Repository) GetRefreshTokenByTokenAndDevice(token string, deviceID string) (*entity.RefreshToken, error) {
 	var refreshToken schemas.RefreshToken
 	if err := r.db.Where("token = ? AND device_id = ?", token, deviceID).First(&refreshToken).Error; err != nil {
 		return nil, err
