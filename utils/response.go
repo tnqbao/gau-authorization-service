@@ -11,7 +11,7 @@ func JSON200(c *gin.Context, data gin.H) {
 }
 
 func JSON500(c *gin.Context, err string) {
-	fmt.Print("Error: ", err, "\n")
+	log.Printf("Error: %s", err)
 	c.JSON(500, gin.H{
 		"error":  "Internal Server Error",
 		"status": 500,
