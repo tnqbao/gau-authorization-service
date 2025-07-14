@@ -166,7 +166,10 @@ func (ctrl *Controller) RenewAccessToken(c *gin.Context) {
 }
 
 func (ctrl *Controller) CheckAccessToken(c *gin.Context) {
-	token := c.Param("token")
+	token := c.Query("token")
+	if token == "" {
+		token = c.GetHeader("Authorization")
+	}
 	if token == "" {
 		utils.JSON400(c, "Access token is required")
 		return
