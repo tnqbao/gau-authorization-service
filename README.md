@@ -16,22 +16,13 @@ Repo này cung cấp dịch vụ xác thực và phân quyền viết bằng Go,
 tnqbao-gau-authorization-service/
 ├── Dockerfile
 ├── entrypoint.sh
-├── go.mod
-├── go.sum
 ├── init-env.sh
 ├── main.go
-├── .dockerignore
-├── .env.example
 ├── config/
-│   ├── env_config.go
-│   └── main.go
 ├── controller/
-│   ├── main.go
-│   └── refresh_token.go
 ├── deploy/
 │   ├── docker/
 │   │   ├── docker-compose.yml
-│   │   ├── keep
 │   │   └── .env.example
 │   └── k8s/
 │       ├── production/
@@ -41,27 +32,11 @@ tnqbao-gau-authorization-service/
 │       │   ├── unapply.sh
 │       │   ├── .env.example
 │       │   ├── base/
-│       │   │   └── keep
+│       │   │   └── *.yaml
 │       │   └── template/
-│       │       ├── configmap.yaml
-│       │       ├── deployment.yaml
-│       │       ├── hpa.yaml
-│       │       ├── secret.yaml
-│       │       └── service.yaml
+│       │       ├── *.yaml
 │       └── staging/
-│           ├── apply.sh
-│           ├── apply_envsubst.sh
-│           ├── kustomization.yaml
-│           ├── unapply.sh
-│           ├── .env.example
-│           ├── base/
-│           │   └── keep
-│           └── template/
-│               ├── configmap.yaml
-│               ├── deployment.yaml
-│               ├── hpa.yaml
-│               ├── secret.yaml
-│               └── service.yaml
+│           ├── similar to production
 ├── entity/
 │   └── refesh_token.go
 ├── infra/
@@ -69,11 +44,8 @@ tnqbao-gau-authorization-service/
 │   ├── posgrest.go
 │   └── redis.go
 ├── middlewares/
-│   ├── cors.go
-│   └── main.go
 ├── migrations/
-│   ├── 000001_create_refresh_tokens.down.sql
-│   └── 000001_create_refresh_tokens.up.sql
+│   ├── *.sql
 ├── repository/
 │   ├── bitmap.go
 │   ├── main.go
@@ -84,22 +56,22 @@ tnqbao-gau-authorization-service/
 
 ### 📑 Directory Description | Mô tả thư mục
 
-| Path | Description | Mô tả |
-|------|-------------|--------|
-| `Dockerfile`, `entrypoint.sh` | Docker image build and startup script | File build và khởi động Docker |
-| `go.mod`, `go.sum` | Go module definitions | Định nghĩa module Go |
-| `init-env.sh` | Script to generate `.env` from `.env.example` | Tạo file `.env` từ `.env.example` |
-| `.env.example` | Sample environment variables | Biến môi trường mẫu |
-| `config/` | Environment loading and configuration logic | Logic cấu hình và load môi trường |
-| `controller/` | HTTP handlers (e.g., refresh token) | Xử lý HTTP |
-| `deploy/docker/` | Docker Compose setup | Cấu hình triển khai với Docker |
-| `deploy/k8s/` | Kubernetes manifests and scripts for staging/production | Manifest và script triển khai trên K8s |
-| `entity/` | Domain models (e.g., refresh tokens) | Các model dữ liệu chính |
-| `infra/` | PostgreSQL, Redis setup and connections | Thiết lập DB và Redis |
-| `middlewares/` | CORS and other middleware logic | Middleware |
-| `migrations/` | SQL migration files | Các file migration SQL |
-| `repository/` | Data access and business logic | Truy cập và xử lý dữ liệu |
-| `routes/` | API route definitions | Định nghĩa route |
+| Path                          | Description                                             | Mô tả                                  |
+|-------------------------------|---------------------------------------------------------|----------------------------------------|
+| `Dockerfile`, `entrypoint.sh` | Docker image build and startup script                   | File build và khởi động Docker         |
+| `go.mod`, `go.sum`            | Go module definitions                                   | Định nghĩa module Go                   |
+| `init-env.sh`                 | Script to generate `.env` from `.env.example`           | Tạo file `.env` từ `.env.example`      |
+| `.env.example`                | Sample environment variables                            | Biến môi trường mẫu                    |
+| `config/`                     | Environment loading and configuration logic             | Logic cấu hình và load môi trường      |
+| `controller/`                 | HTTP handlers (e.g., refresh token)                     | Xử lý HTTP                             |
+| `deploy/docker/`              | Docker Compose setup                                    | Cấu hình triển khai với Docker         |
+| `deploy/k8s/`                 | Kubernetes manifests and scripts for staging/production | Manifest và script triển khai trên K8s |
+| `entity/`                     | Domain models (e.g., refresh tokens)                    | Các model dữ liệu chính                |
+| `infra/`                      | PostgreSQL, Redis setup and connections                 | Thiết lập DB và Redis                  |
+| `middlewares/`                | CORS and other middleware logic                         | Middleware                             |
+| `migrations/`                 | SQL migration files                                     | Các file migration SQL                 |
+| `repository/`                 | Data access and business logic                          | Truy cập và xử lý dữ liệu              |
+| `routes/`                     | API route definitions                                   | Định nghĩa route                       |
 
 ---
 
