@@ -53,18 +53,18 @@ func ParseJIDValue(val interface{}) (int64, error) {
 	case string:
 		return strconv.ParseInt(v, 10, 64)
 	default:
-		return 0, errors.New("Invalid jid format")
+		return 0, errors.New("invalid jid format")
 	}
 }
 
 func InjectClaimsToContext(c *gin.Context, claims jwt.MapClaims) error {
 	userIDStr, ok := claims["user_id"].(string)
 	if !ok {
-		return errors.New("Invalid user_id format")
+		return errors.New("invalid user_id format")
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return errors.New("Invalid user_id format")
+		return errors.New("invalid user_id format")
 	}
 	c.Set("user_id", userID)
 
