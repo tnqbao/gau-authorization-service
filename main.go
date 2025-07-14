@@ -5,6 +5,7 @@ import (
 	"github.com/tnqbao/gau-authorization-service/config"
 	"github.com/tnqbao/gau-authorization-service/controller"
 	"github.com/tnqbao/gau-authorization-service/infra"
+	"github.com/tnqbao/gau-authorization-service/repository"
 	"github.com/tnqbao/gau-authorization-service/routes"
 	"log"
 )
@@ -16,11 +17,23 @@ func main() {
 	}
 
 	// Initialize configuration and infrastructure
-	newConfig := config.NewConfig()
+	newConfig := config.InitConfig()
+	if newConfig == nil {
+		log.Fatal("Failed to initialize configuration")
+	}
+
 	newInfra := infra.InitInfra(newConfig)
 
+	if newInfra == nil {
+		log.Fatal("Failed to initialize infrastructure")
+	}
+
+	newRepository := repository.InitRepository(newInfra)
+	if newRepository == nil {
+		log.Fatal("Failed to initialize repository")
+	}
 	// Initialize controller with the new configuration and infrastructure
-	ctrl := controller.NewController(newConfig, newInfra)
+	ctrl := controller.NewController(newConfig, newInfra, newRepository)
 
 	router := routes.SetupRouter(ctrl)
 	router.Run(":8080")

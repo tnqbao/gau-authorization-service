@@ -4,7 +4,7 @@ type Config struct {
 	EnvConfig *EnvConfig `json:"env_config"`
 }
 
-func NewConfig() *Config {
+func InitConfig() *Config {
 	EnvConfig := LoadEnvConfig()
 	return &Config{
 		EnvConfig: EnvConfig,
