@@ -15,10 +15,12 @@ func SetupRouter(ctrl *controller.Controller) *gin.Engine {
 		panic("Failed to initialize middlewares")
 	}
 	r := gin.Default()
-	// apiRoutes := r.Group("/")
-	// {
-	// 	apiRoutes.POST("/upload", ctrl.UploadFile)
-
-	// }
+	apiRoutes := r.Group("/api/v2/authorization", newMiddlewares.CORSMiddleware)
+	{
+		apiRoutes.GET("/token/renew", ctrl.RenewAccessToken)
+		apiRoutes.GET("/token/get-new", ctrl.CreateNewToken)
+		apiRoutes.GET("/token/check", ctrl.CheckAccessToken)
+		apiRoutes.DELETE("/token/revoke", ctrl.RevokeToken)
+	}
 	return r
 }
