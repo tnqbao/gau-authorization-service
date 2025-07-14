@@ -1,7 +1,9 @@
 package infra
 
 import (
+	"fmt"
 	"github.com/tnqbao/gau-authorization-service/config"
+	"sync"
 )
 
 type Infra struct {
@@ -11,27 +13,30 @@ type Infra struct {
 
 var infraInstance *Infra
 
-func InitInfra(cfg *config.Config) *Infra {
-	if infraInstance != nil {
-		return infraInstance
-	}
+var infraOnce sync.Once
+var infraErr error
 
-	redis := InitRedisClient(cfg.EnvConfig)
-	if redis == nil {
-		panic("Failed to initialize Redis service")
-	}
+func InitInfra(cfg *config.Config) (*Infra, error) {
+	infraOnce.Do(func() {
+		redis, err := InitRedisClient(cfg.EnvConfig)
+		if err != nil {
+			infraErr = fmt.Errorf("failed to initialize Redis: %w", err)
+			return
+		}
 
-	postgres := InitPostgresClient(cfg.EnvConfig)
-	if postgres == nil {
-		panic("Failed to initialize Postgres service")
-	}
+		postgres, err := InitPostgresClient(cfg.EnvConfig)
+		if err != nil {
+			infraErr = fmt.Errorf("failed to initialize Postgres: %w", err)
+			return
+		}
 
-	infraInstance = &Infra{
-		Redis:    redis,
-		Postgres: postgres,
-	}
+		infraInstance = &Infra{
+			Redis:    redis,
+			Postgres: postgres,
+		}
+	})
 
-	return infraInstance
+	return infraInstance, infraErr
 }
 
 func GetClient() *Infra {
