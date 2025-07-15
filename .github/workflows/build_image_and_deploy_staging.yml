@@ -60,7 +60,7 @@ jobs:
 
       - name: Download .env from server
         run: |
-          scp ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/tnqbao/.enviroment/gau-authorization-service/.env ./deploy/k8s/staging/.env
+          scp ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/tnqbao/.enviroment/gau-authorization-service/staging.env ./deploy/k8s/staging/.env
 
       - name: Download kubeconfig.yaml from server
         run: |
@@ -75,12 +75,7 @@ jobs:
 
       - name: Make scripts executable
         run: |
-          chmod +x ./deploy/k8s/staging/apply_envsubst.sh
           chmod +x ./deploy/k8s/staging/apply.sh
-
-      - name: Render manifests with envsubst
-        working-directory: ./deploy/k8s/staging
-        run: ./apply_envsubst.sh
 
       - name: Apply manifests to Kubernetes
         working-directory: ./deploy/k8s/staging
