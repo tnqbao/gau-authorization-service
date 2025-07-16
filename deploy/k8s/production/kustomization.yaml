@@ -6,3 +6,5 @@ resources:
   - ./base/deployment.yaml
   - ./base/service.yaml
   - ./base/hpa.yaml
+  - ./base/pvc.yaml
+  - ./base/ingress.yaml
