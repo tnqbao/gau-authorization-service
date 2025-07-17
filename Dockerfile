@@ -1,4 +1,5 @@
 FROM golang:1.23-alpine AS builder
+
 WORKDIR /gau_authorization
 
 COPY go.mod go.sum ./
@@ -8,12 +9,14 @@ COPY . .
 RUN go build -o gau-authorization-service.bin .
 
 FROM alpine:latest
+
 WORKDIR /gau_authorization
 
 RUN apk add --no-cache \
     bash \
     ca-certificates \
     curl \
+    tzdata \
     && curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz \
     | tar xvz -C /tmp \
     && mv /tmp/migrate /usr/local/bin/migrate \

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gau-authorization-service
+  name: gau-authorization-deployment
   namespace: bao-${DEPLOY_ENV}-env
 spec:
   replicas: 1
@@ -33,7 +33,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-authorization-service
+  name: redis-authorization-deployment
   namespace: bao-${DEPLOY_ENV}-env
 spec:
   replicas: 1

@@ -11,7 +11,7 @@ echo "Migrations completed successfully."
 # Start the application
 echo "Starting API..."
 if [ -f "gau-authorization-service.bin" ]; then
-    ./gau-account-service.bin
+    ./gau-authorization-service.bin
 else
     echo "Running main.go..."
     go run main.go
