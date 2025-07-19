@@ -1,4 +1,4 @@
-# gau-authorization-service
+# Authorization Service by Gau
 
 ## Introduction | Giới thiệu
 
