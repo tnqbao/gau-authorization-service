@@ -1,18 +1,18 @@
-#name: production-deploy
-#
-#on:
-#  push:
-#    branches:
-#      - master
-#
-#jobs:
-#  deploy:
-#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
+name: production-deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 #
 #      - name: Install Tailscale
 #        run: |
