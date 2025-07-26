@@ -47,6 +47,11 @@ spec:
     spec:
       containers:
         - name: redis-authorization-service
+          envFrom:
+            - configMapRef:
+                name: bao-authorization-${DEPLOY_ENV}-config
+            - secretRef:
+                name: bao-authorization-${DEPLOY_ENV}-secret
           image: redis:7.2-alpine
           resources:
             requests:
