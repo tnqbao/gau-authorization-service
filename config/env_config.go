@@ -29,6 +29,8 @@ type EnvConfig struct {
 		Password string
 		Database int
 	}
+
+	PrivateKey string
 }
 
 func LoadEnvConfig() (*EnvConfig, error) {
@@ -80,6 +82,8 @@ func LoadEnvConfig() (*EnvConfig, error) {
 	// CORS
 	config.CORS.AllowDomains = os.Getenv("ALLOWED_DOMAINS")
 	config.CORS.GlobalDomain = os.Getenv("GLOBAL_DOMAIN")
+
+	config.PrivateKey = os.Getenv("PRIVATE_KEY")
 
 	// Redis
 	config.Redis.Address = os.Getenv("REDIS_ADDRESS")

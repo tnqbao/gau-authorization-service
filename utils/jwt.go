@@ -100,6 +100,5 @@ func ValidateToken(ctx context.Context, tokenStr string, config *config.EnvConfi
 	if revoked == 1 {
 		return nil, errors.New("token has been revoked")
 	}
-
 	return claims, nil
 }

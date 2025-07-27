@@ -16,6 +16,7 @@ spec:
       containers:
         - name: gau-authorization-service
           image: iamqbao/gau_authorization_service:latest
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: bao-authorization-${DEPLOY_ENV}-config
