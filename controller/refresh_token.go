@@ -33,7 +33,6 @@ func (ctrl *Controller) CreateNewToken(c *gin.Context) {
 		return
 	}
 
-	// === Refresh Token ===
 	refreshTokenID, err := ctrl.Repository.AllocateRefreshTokenID(c.Request.Context())
 	if err != nil {
 		log.Println("[CreateNewToken] Failed to allocate refresh token ID:", err)
@@ -60,7 +59,6 @@ func (ctrl *Controller) CreateNewToken(c *gin.Context) {
 		return
 	}
 
-	// === Access Token ===
 	accessTokenDuration := time.Duration(ctrl.Config.EnvConfig.JWT.Expire) * time.Minute
 	if accessTokenDuration <= 0 {
 		accessTokenDuration = 15 * time.Minute
@@ -84,7 +82,6 @@ func (ctrl *Controller) CreateNewToken(c *gin.Context) {
 		return
 	}
 
-	// === Response ===
 	utils.JSON200(c, gin.H{
 		"access_token":  accessToken,
 		"refresh_token": refreshTokenPlain,
@@ -127,14 +124,12 @@ func (ctrl *Controller) RenewAccessToken(c *gin.Context) {
 		return
 	}
 
-	// Decode old access token
 	claims, err := ctrl.DecodeAccessToken(oldAccessToken)
 	if err != nil || claims == nil {
 		utils.JSON401(c, "Invalid old access token")
 		return
 	}
 
-	// === Access Token mới ===
 	duration := time.Duration(ctrl.Config.EnvConfig.JWT.Expire) * time.Minute
 	if duration <= 0 {
 		duration = 15 * time.Minute

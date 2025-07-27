@@ -17,10 +17,11 @@ func SetupRouter(ctrl *controller.Controller) *gin.Engine {
 	r := gin.Default()
 	apiRoutes := r.Group("/api/v2/authorization", newMiddlewares.CORSMiddleware)
 	{
+		apiRoutes.POST("/token", ctrl.CreateNewToken)
 		apiRoutes.GET("/token/renew", ctrl.RenewAccessToken)
-		apiRoutes.GET("/token/get-new", ctrl.CreateNewToken)
-		apiRoutes.GET("/token/check", ctrl.CheckAccessToken)
-		apiRoutes.DELETE("/token/revoke", ctrl.RevokeToken)
+		apiRoutes.GET("/token/validate", ctrl.CheckAccessToken)
+		apiRoutes.DELETE("/token", ctrl.RevokeToken)
 	}
+
 	return r
 }
