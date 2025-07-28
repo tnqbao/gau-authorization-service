@@ -15,12 +15,12 @@ func SetupRouter(ctrl *controller.Controller) *gin.Engine {
 		panic("Failed to initialize middlewares")
 	}
 	r := gin.Default()
-	apiRoutes := r.Group("/api/v2/authorization", useMiddlewares.CORSMiddleware)
+	apiRoutes := r.Group("/api/v2/authorization", useMiddlewares.CORSMiddleware, useMiddlewares.PrivateMiddlewares)
 	{
-		apiRoutes.POST("/token", useMiddlewares.PrivateMiddlewares, ctrl.CreateNewToken)
+		apiRoutes.POST("/token", ctrl.CreateNewToken)
 		apiRoutes.GET("/token/renew", ctrl.RenewAccessToken)
 		apiRoutes.GET("/token/validate", ctrl.CheckAccessToken)
-		apiRoutes.DELETE("/token", useMiddlewares.PrivateMiddlewares, ctrl.RevokeToken)
+		apiRoutes.DELETE("/token", ctrl.RevokeToken)
 	}
 
 	return r
