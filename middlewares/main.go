@@ -21,6 +21,7 @@ func NewMiddlewares(ctrl *controller.Controller) (*Middlewares, error) {
 	}
 
 	return &Middlewares{
-		CORSMiddleware: cors,
+		CORSMiddleware:     cors,
+		PrivateMiddlewares: private,
 	}, nil
 }
