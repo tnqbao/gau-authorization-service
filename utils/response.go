@@ -45,3 +45,10 @@ func JSON404(c *gin.Context, err string) {
 		"status": 404,
 	})
 }
+
+func JSON403(c *gin.Context, err string) {
+	c.JSON(403, gin.H{
+		"error":  err,
+		"status": 403,
+	})
+}

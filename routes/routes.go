@@ -7,15 +7,15 @@ import (
 )
 
 func SetupRouter(ctrl *controller.Controller) *gin.Engine {
-	newMiddlewares, err := middlewares.NewMiddlewares(ctrl)
+	useMiddlewares, err := middlewares.NewMiddlewares(ctrl)
 	if err != nil {
 		panic("Failed to initialize middlewares: " + err.Error())
 	}
-	if newMiddlewares == nil {
+	if useMiddlewares == nil {
 		panic("Failed to initialize middlewares")
 	}
 	r := gin.Default()
-	apiRoutes := r.Group("/api/v2/authorization", newMiddlewares.CORSMiddleware)
+	apiRoutes := r.Group("/api/v2/authorization", useMiddlewares.CORSMiddleware, useMiddlewares.PrivateMiddlewares)
 	{
 		apiRoutes.POST("/token", ctrl.CreateNewToken)
 		apiRoutes.GET("/token/renew", ctrl.RenewAccessToken)
