@@ -24,10 +24,10 @@ spec:
                 name: bao-authorization-${DEPLOY_ENV}-secret
           resources:
             requests:
-              cpu: "300m"
+              cpu: "50m"
               memory: "100Mi"
             limits:
-              cpu: "500m"
+              cpu: "100m"
               memory: "500Mi"
 
 ---
@@ -56,8 +56,8 @@ spec:
           image: redis:7.2-alpine
           resources:
             requests:
-              cpu: "300m"
+              cpu: "100m"
               memory: "256Mi"
             limits:
-              cpu: "500m"
+              cpu: "200m"
               memory: "512Mi"
