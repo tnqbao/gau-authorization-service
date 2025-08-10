@@ -4,136 +4,107 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
-	RefreshTokenIDBitmap        = "refresh_token_bitmap"
-	RefreshTokenBlacklistBitmap = "refresh_token_blacklist_bitmap"
+	RefreshTokenBlacklistPrefix = "refresh_token_blacklist:"
+	RefreshTokenTTLPrefix       = "refresh_token_ttl:"
 )
 
-func (r *Repository) AllocateRefreshTokenID(ctx context.Context) (int64, error) {
-	id, err := r.CacheDB.BitPos(ctx, RefreshTokenIDBitmap, 0).Result()
-	if err != nil || id < 0 {
-		return -1, err
-	}
-
-	if _, err := r.CacheDB.SetBit(ctx, RefreshTokenIDBitmap, id, 1).Result(); err != nil {
-		return -1, err
-	}
-
-	// Clear blacklist just in case
-	r.CacheDB.SetBit(ctx, RefreshTokenBlacklistBitmap, id, 0)
-
-	return id, nil
+// Generate a new UUID for refresh token
+func (r *Repository) GenerateRefreshTokenID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
 }
 
-func (r *Repository) ReleaseAndBlacklistID(ctx context.Context, id int64) error {
-	if _, err := r.CacheDB.SetBit(ctx, RefreshTokenIDBitmap, id, 0).Result(); err != nil {
-		return err
-	}
-	if _, err := r.CacheDB.SetBit(ctx, RefreshTokenBlacklistBitmap, id, 1).Result(); err != nil {
+// Blacklist a refresh token UUID
+func (r *Repository) BlacklistRefreshTokenID(ctx context.Context, id uuid.UUID) error {
+	key := RefreshTokenBlacklistPrefix + id.String()
+	if _, err := r.CacheDB.Set(ctx, key, 1, 0).Result(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Repository) ReleaseID(ctx context.Context, id int64) error {
-	if _, err := r.CacheDB.SetBit(ctx, RefreshTokenIDBitmap, id, 0).Result(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *Repository) IsRefreshTokenBlacklisted(ctx context.Context, id int64) (bool, error) {
-	bit, err := r.CacheDB.GetBit(ctx, RefreshTokenBlacklistBitmap, id).Result()
+// Check if a refresh token UUID is blacklisted
+func (r *Repository) IsRefreshTokenBlacklisted(ctx context.Context, id uuid.UUID) (bool, error) {
+	key := RefreshTokenBlacklistPrefix + id.String()
+	exists, err := r.CacheDB.Exists(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}
-	return bit == 1, nil
+	return exists > 0, nil
 }
 
-func (r *Repository) ReleaseAndBlacklistIDWithTTL(ctx context.Context, id int64, ttl time.Duration) error {
+// Blacklist refresh token with TTL
+func (r *Repository) BlacklistRefreshTokenIDWithTTL(ctx context.Context, id uuid.UUID, ttl time.Duration) error {
 	pipe := r.CacheDB.TxPipeline()
 
-	// Release ID from bitmap
-	pipe.SetBit(ctx, "blacklist_bitmap", id, 1)
+	// Set the ID in the blacklist
+	blacklistKey := RefreshTokenBlacklistPrefix + id.String()
+	pipe.Set(ctx, blacklistKey, 1, ttl)
 
-	// Set the ID in the blacklist bitmap
-	expireKey := "blacklist_expire:" + strconv.FormatInt(id, 10)
-	pipe.Set(ctx, expireKey, 1, ttl)
+	// Set TTL tracking key
+	ttlKey := RefreshTokenTTLPrefix + id.String()
+	pipe.Set(ctx, ttlKey, 1, ttl)
 
 	_, err := pipe.Exec(ctx)
 	return err
 }
 
-func (r *Repository) CleanupBlacklistBitmap(ctx context.Context) error {
-	const bitmapKey = "blacklist_bitmap"
-	const blockSize = 1024
-	const maxID = 100_000 // Amount of IDs to scan, adjust as needed
-
-	// 1. Collect all still-active keys
-	activeIDs := make(map[int64]struct{})
+// Clean up expired blacklist entries
+func (r *Repository) CleanupBlacklistEntries(ctx context.Context) error {
+	// Scan for all blacklist entries
 	var cursor uint64
+	cleanedCount := 0
+
 	for {
-		keys, nextCursor, err := r.CacheDB.Scan(ctx, cursor, "blacklist_expire:*", 1000).Result()
+		keys, nextCursor, err := r.CacheDB.Scan(ctx, cursor, RefreshTokenBlacklistPrefix+"*", 1000).Result()
 		if err != nil {
 			return fmt.Errorf("scan error: %w", err)
 		}
+
 		for _, key := range keys {
-			var id int64
-			if _, err := fmt.Sscanf(key, "blacklist_expire:%d", &id); err == nil {
-				activeIDs[id] = struct{}{}
+			// Check if the key still exists (hasn't expired)
+			exists, err := r.CacheDB.Exists(ctx, key).Result()
+			if err != nil {
+				log.Printf("Error checking key existence %s: %v\n", key, err)
+				continue
+			}
+
+			// If key doesn't exist, it was auto-expired by Redis TTL
+			if exists == 0 {
+				cleanedCount++
 			}
 		}
+
 		cursor = nextCursor
 		if cursor == 0 {
 			break
 		}
 	}
 
-	// 2. Scan bitmap by chunks
-	for start := int64(0); start < maxID; start += blockSize {
-		end := start + blockSize
-		if end > maxID {
-			end = maxID
-		}
-
-		// BITFIELD to get blockSize bits starting at offset
-		cmds := make([]interface{}, 0, (end-start)*2+1)
-		cmds = append(cmds, bitmapKey)
-		for i := int64(0); i < end-start; i++ {
-			cmds = append(cmds, "GET", "u1", start+i)
-		}
-
-		results, err := r.CacheDB.Do(ctx, cmds...).Slice()
-		if err != nil {
-			log.Printf("BITFIELD failed from %d to %d: %v\n", start, end, err)
-			continue
-		}
-
-		for i, raw := range results {
-			bit, ok := raw.(int64)
-			if !ok || bit == 0 {
-				continue
-			}
-			id := start + int64(i)
-
-			// If the ID is not in the active set, clear the bit
-			if _, isAlive := activeIDs[id]; !isAlive {
-				_, err := r.CacheDB.SetBit(ctx, bitmapKey, id, 0).Result()
-				if err != nil {
-					log.Printf("Failed to clear bit %d: %v\n", id, err)
-				}
-			}
-		}
-	}
-
-	log.Println("Bitmap cleanup complete.")
+	log.Printf("Blacklist cleanup complete. %d entries were auto-expired by Redis TTL.\n", cleanedCount)
 	return nil
 }
 
-func (r *Repository) GetBit(ctx context.Context, key string, offset int64) (int64, error) {
-	return r.CacheDB.GetBit(ctx, key, offset).Result()
+// Remove from blacklist (for manual cleanup)
+func (r *Repository) RemoveFromBlacklist(ctx context.Context, id uuid.UUID) error {
+	pipe := r.CacheDB.TxPipeline()
+
+	blacklistKey := RefreshTokenBlacklistPrefix + id.String()
+	ttlKey := RefreshTokenTTLPrefix + id.String()
+
+	pipe.Del(ctx, blacklistKey)
+	pipe.Del(ctx, ttlKey)
+
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// Legacy method compatibility - no longer needed but kept for interface compatibility
+func (r *Repository) GetBit(_ context.Context, _ string, _ int64) (int64, error) {
+	return 0, fmt.Errorf("GetBit is deprecated for UUID-based tokens")
 }
