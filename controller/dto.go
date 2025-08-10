@@ -6,7 +6,7 @@ import (
 )
 
 type ClaimsToken struct {
-	JID        int64     `json:"jid"`
+	JID        uuid.UUID `json:"jid"`
 	UserID     uuid.UUID `json:"user_id"`
 	Permission string    `json:"permission"`
 	FullName   string    `json:"fullname"`

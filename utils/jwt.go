@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tnqbao/gau-authorization-service/config"
 	"github.com/tnqbao/gau-authorization-service/repository"
-	"strconv"
 	"strings"
 )
 
@@ -34,26 +33,22 @@ func ParseToken(tokenString string, config *config.EnvConfig) (*jwt.Token, error
 	})
 }
 
-func ExtractJID(claims jwt.MapClaims) (int64, error) {
+func ExtractJID(claims jwt.MapClaims) (uuid.UUID, error) {
 	if val, ok := claims["jti"]; ok {
 		return ParseJIDValue(val)
 	}
 	if val, ok := claims["jid"]; ok {
 		return ParseJIDValue(val)
 	}
-	return 0, errors.New("Token is missing jti/jid")
+	return uuid.Nil, errors.New("Token is missing jti/jid")
 }
 
-func ParseJIDValue(val interface{}) (int64, error) {
+func ParseJIDValue(val interface{}) (uuid.UUID, error) {
 	switch v := val.(type) {
-	case float64:
-		return int64(v), nil
-	case int64:
-		return v, nil
 	case string:
-		return strconv.ParseInt(v, 10, 64)
+		return uuid.Parse(v)
 	default:
-		return 0, errors.New("invalid jid format")
+		return uuid.Nil, errors.New("invalid jid format")
 	}
 }
 
@@ -88,17 +83,19 @@ func ValidateToken(ctx context.Context, tokenStr string, config *config.EnvConfi
 		return nil, errors.New("invalid token claims")
 	}
 
-	// Check blacklist
+	// Check blacklist using UUID-based approach
 	jid, err := ExtractJID(claims)
 	if err != nil {
 		return nil, err
 	}
-	revoked, err := repo.GetBit(ctx, "blacklist_bitmap", jid)
+
+	revoked, err := repo.IsRefreshTokenBlacklisted(ctx, jid)
 	if err != nil {
 		return nil, errors.New("redis error")
 	}
-	if revoked == 1 {
+	if revoked {
 		return nil, errors.New("token has been revoked")
 	}
+
 	return claims, nil
 }

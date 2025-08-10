@@ -33,10 +33,11 @@ func (ctrl *Controller) CreateNewToken(c *gin.Context) {
 		return
 	}
 
-	refreshTokenID, err := ctrl.Repository.AllocateRefreshTokenID(c.Request.Context())
+	// Generate UUID for refresh token instead of allocating from bitmap
+	refreshTokenID, err := ctrl.Repository.GenerateRefreshTokenID(c.Request.Context())
 	if err != nil {
-		log.Println("[CreateNewToken] Failed to allocate refresh token ID:", err)
-		utils.JSON500(c, "Could not allocate refresh token ID")
+		log.Println("[CreateNewToken] Failed to generate refresh token ID:", err)
+		utils.JSON500(c, "Could not generate refresh token ID")
 		return
 	}
 
@@ -54,7 +55,6 @@ func (ctrl *Controller) CreateNewToken(c *gin.Context) {
 
 	if err := ctrl.Repository.CreateRefreshToken(refreshTokenModel); err != nil {
 		log.Println("[CreateNewToken] Failed to save refresh token:", err)
-		_ = ctrl.Repository.ReleaseID(c.Request.Context(), refreshTokenID)
 		utils.JSON500(c, "Could not store refresh token")
 		return
 	}
@@ -222,14 +222,15 @@ func (ctrl *Controller) RevokeToken(c *gin.Context) {
 		if rowsAffected > 0 {
 			ttl := time.Until(refreshTokenRecord.ExpiresAt)
 			if ttl > 0 {
-				if err := ctrl.Repository.ReleaseAndBlacklistIDWithTTL(
+				// Use UUID-based blacklist instead of bitmap
+				if err := ctrl.Repository.BlacklistRefreshTokenIDWithTTL(
 					c.Request.Context(),
 					refreshTokenRecord.ID,
 					ttl,
 				); err != nil {
 					log.Println("Failed to blacklist refresh token ID with TTL:", err)
 				} else {
-					log.Printf("Refresh token ID %d blacklisted for %s\n", refreshTokenRecord.ID, ttl)
+					log.Printf("Refresh token ID %s blacklisted for %s\n", refreshTokenRecord.ID.String(), ttl)
 				}
 			}
 		}
