@@ -3,11 +3,12 @@ package controller
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"net/http"
-	"time"
 )
 
 func (ctrl *Controller) CreateAccessTokenModel(claims ClaimsToken) (string, error) {
@@ -100,18 +101,22 @@ func handleTokenError(c *gin.Context, err error) {
 func (ctrl *Controller) DecodeAccessToken(tokenString string) (*ClaimsToken, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &ClaimsToken{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			ctrl.Provider.LoggerProvider.ErrorSimple("[AUTH] Unexpected JWT signing method", fmt.Errorf("method: %v", token.Header["alg"]))
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(ctrl.Config.EnvConfig.JWT.SecretKey), nil
 	})
 
 	if err != nil {
+		ctrl.Provider.LoggerProvider.ErrorSimple("[AUTH] Failed to parse JWT token", err)
 		return nil, err
 	}
 
 	if claims, ok := token.Claims.(*ClaimsToken); ok && token.Valid {
+		ctrl.Provider.LoggerProvider.DebugSimple("[AUTH] Access token decoded successfully")
 		return claims, nil
 	}
 
+	ctrl.Provider.LoggerProvider.WarningSimple("[AUTH] Invalid JWT token")
 	return nil, fmt.Errorf("invalid token")
 }
