@@ -2,13 +2,15 @@ package infra
 
 import (
 	"fmt"
-	"github.com/tnqbao/gau-authorization-service/config"
 	"sync"
+
+	"github.com/tnqbao/gau-authorization-service/config"
 )
 
 type Infra struct {
 	Redis    *RedisClient
 	Postgres *PostgresClient
+	Logger   *LoggerClient
 }
 
 var infraInstance *Infra
@@ -18,6 +20,12 @@ var infraErr error
 
 func InitInfra(cfg *config.Config) (*Infra, error) {
 	infraOnce.Do(func() {
+		// Initialize logger first
+		logger := InitLoggerClient(cfg.EnvConfig)
+		if logger == nil {
+			panic("Failed to initialize Logger service")
+		}
+
 		redis, err := InitRedisClient(cfg.EnvConfig)
 		if err != nil {
 			infraErr = fmt.Errorf("failed to initialize Redis: %w", err)
@@ -33,6 +41,7 @@ func InitInfra(cfg *config.Config) (*Infra, error) {
 		infraInstance = &Infra{
 			Redis:    redis,
 			Postgres: postgres,
+			Logger:   logger,
 		}
 	})
 
